@@ -24,16 +24,9 @@
 #include <string.h>
 
 #include "dictd.h"
+#include "index.h"
 
-static int index_open(char *, struct dc_index *);
-static int index_exact_find(const char *, const struct dc_index *,
-    struct dc_index_list *);
-static int index_prefix_find(const char *, const struct dc_index *,
-    struct dc_index_list *);
-
-#include <stdio.h> // XXX
-
-static int
+int
 index_open(char *path, struct dc_index *idx)
 {
 	struct stat sb;
@@ -285,45 +278,16 @@ index_find(const char *req, const struct dc_index *idx,
 	return r;
 }
 
-static int
+int
 index_prefix_find(const char *req, const struct dc_index *idx,
     struct dc_index_list *lst)
 {
 	return index_find(req, idx, lst, index_prefix_cmp);
 }
 
-static int
+int
 index_exact_find(const char *req, const struct dc_index *idx,
     struct dc_index_list *lst)
 {
 	return index_find(req, idx, lst, index_exact_cmp);
-}
-
-int
-main(void)
-{
-	struct dc_index_list list;
-	struct dc_index myidx;
-	struct dc_index_entry myr[100], *my;
-	char *str;
-	char ans[256] = {0};
-	int i, r;
-
-	SLIST_INIT(&list);
-	memset(myr, 0, sizeof(struct dc_index_entry) * 100);
-	for (i = 0; i < 100; i++)
-		SLIST_INSERT_HEAD(&list, &myr[i], entries);
-
-	r = index_open("/home/mbuhl/Downloads/eng-deu/eng-deu.index", &myidx);
-	printf("open: %d\n", r);
-	//str = index_bsearch("fuck", &myidx, index_exact_cmp);
-	//printf("bsearch: %s\n", str);
-	r = index_prefix_find("shit", &myidx, &list);
-	SLIST_FOREACH(my, &list, entries) {
-		if (my->match == NULL)
-			break;
-		strncpy(ans, my->match, my->match_len);
-		ans[my->match_len] = '\0';
-		printf("index_prefix_find: %s, def_off=%lu, def_len=%lu\n", ans, my->def_off, my->def_len);
-	}
 }

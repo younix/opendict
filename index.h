@@ -14,26 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define MAXIMUM(a,b)	(((a)>(b))?(a):(b))
-#define MINIMUM(a,b)	(((a)<(b))?(a):(b))
-
-SLIST_HEAD(dc_index_list, dc_index_entry);
-struct dc_index_entry {
-	const char 			*match; // XXX: do we really need this?
-	size_t				 match_len; // XXX: same
-	size_t				 def_off;
-	size_t				 def_len;
-	SLIST_ENTRY(dc_index_entry)	 entries;
-};
-
-struct dc_index {
-	const char 	*data;
-	off_t		 size;
-};
-
-struct dc_database {
-	char				*name;
-	struct dc_index			*index;
-	void				*data;
-	TAILQ_ENTRY(dc_database)	 entry;
-};
+int index_open(char *, struct dc_index *);
+int index_exact_find(const char *, const struct dc_index *,
+    struct dc_index_list *);
+int index_prefix_find(const char *, const struct dc_index *,
+    struct dc_index_list *);
