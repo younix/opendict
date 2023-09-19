@@ -64,7 +64,7 @@ struct gz_stream {
 	int	z_eof;		/* set if end of input file */
 	z_stream z_stream;	/* libz stream */
 	u_char	*z_buf;		/* i/o buffer */
-	off_t	z_buflen;
+	size_t	z_buflen;
 	u_int32_t z_time;	/* timestamp (mtime) */
 	u_int32_t z_crc;	/* crc32 of uncompressed data */
 	u_int32_t z_hlen;	/* length of the gz header */

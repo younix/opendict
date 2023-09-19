@@ -14,37 +14,5 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-
-#include "dictd.h"
-#include "database.h"
-#include "compress.h"
-
-int
-database_open(char *path, struct dc_database *db)
-{
-	if ((db->data = gz_ropen(path)) == NULL)
-		return 1;
-
-	return 0;
-}
-
-int
-database_lookup(struct dc_index_entry *req, struct dc_database *db, char *out)
-{
-	char buf[65535] = { 0 };
-	int r;
-
-	r = gz_read(db->data, req->def_off, buf, req->def_len);
-	if (r == -1)
-		return -1;
-
-	if ((size_t)r != req->def_len)
-		printf("SHORT READ!");
-
-	for (size_t i = 0; i < req->def_len; i++)
-		printf("%c", buf[i]);
-	printf("\n");
-
-	return 0;
-}
+int database_open(char *, struct dc_database *);
+int database_lookup(struct dc_index_entry *, struct dc_database *, char *);

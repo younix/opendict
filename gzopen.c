@@ -171,7 +171,6 @@ get_header_extra_RA(gz_stream *s, int slen)
 	ccount += get_byte(s)<<8;
 	slen -= 6;
 
-	printf("slen=%u, ver=%u, clen=%u, ccount=%u\n", slen, ver, clen, ccount);
 	if (ver != 1 || clen < 0 || ccount < 0 || 2 *  ccount != slen)
 		return -1;
 
@@ -201,7 +200,6 @@ get_header_extra(gz_stream *s, int elen)
 	int slen;
 	int SI1, SI2;
 
-	printf("%s\n", __func__);
 	while(elen > 4) {
 		SI1 = get_byte(s);
 		SI2 = get_byte(s);
@@ -311,14 +309,14 @@ gz_read(void *cookie, size_t off, char *out, size_t len)
 	u_char *start = out; /* starting point for crc computation */
 	int error = Z_OK;
 
+	if (off + len > s->z_buflen)
+		return -1;
+
         chunk = off / s->ra_clen;
         off = off % s->ra_clen;
 
 	/* z_stream.total_in might overflow uLong. */
 	old_total_in = s->z_stream.total_in;
-
-printf("%s: next_in: z_hlen=%d ra_offset=%llu, chunk=%lu, ra_chunk=%hu, off=%lu, len=%lu\n",
-__func__, s->z_hlen, s->ra_offset[chunk], chunk, s->ra_chunks[chunk], off, len);
 
 	/* XXX: just do two chunks in case len goes over current chunk */
         s->z_stream.next_in = s->z_buf + s->z_hlen + s->ra_offset[chunk];
@@ -332,7 +330,6 @@ __func__, s->z_hlen, s->ra_offset[chunk], chunk, s->ra_chunks[chunk], off, len);
 			break;
 
 		error = inflate(&(s->z_stream), Z_PARTIAL_FLUSH); // Z_NO_FLUSH);
-printf("inflate: %u\n", s->z_stream.avail_in);
 
 		if (error == Z_DATA_ERROR) {
 printf("inflate: %s\n", s->z_stream.msg );

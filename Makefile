@@ -8,7 +8,7 @@ CFLAGS+= -Wshadow -Wpointer-arith
 CFLAGS+= -Wsign-compare
 
 PROG = dict
-SRCS = database.c gzopen.c index.c
+SRCS = main.c index.c database.c gzopen.c
 LDADD+=	-lz
 DPADD+= ${LIBZ}
 
