@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <err.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "dictd.h"
@@ -25,14 +26,35 @@
 #include "index.h"
 
 #define MAX_RESULTS	1000
+
+static void
+define(struct dc_database *db, struct dc_index_list *l)
+{
+	char buf[65535];
+	struct dc_index_entry *entry;
+	int r;
+
+	SLIST_FOREACH(entry, l, entries) {
+		if (entry->match == NULL)
+			break;
+		if ((r = database_lookup(entry, db, buf)) == -1) {
+			strncpy(buf, entry->match, entry->match_len);
+			buf[entry->match_len] = '\0';
+			printf("error looking up %s.\n", buf);
+		} else {
+			buf[r] = '\0';
+			printf("%s\n", buf);
+		}
+	}
+}
+
 int
 main(int argc, char *argv[])
 {
 	struct dc_database mydb;
 	struct dc_index_list list;
 	struct dc_index myidx;
-	struct dc_index_entry myr[MAX_RESULTS], *my;
-	char buf[65535] = {0};
+	struct dc_index_entry myr[MAX_RESULTS];
 	int i, r;
 
 	if (argc != 2)
@@ -54,19 +76,5 @@ main(int argc, char *argv[])
 	if (r < 0)
 		return 4;
 
-	printf("%d results\n", r);
-	SLIST_FOREACH(my, &list, entries) {
-		if (my->match == NULL)
-			break;
-		if ((r = database_lookup(my, &mydb, buf)) == -1) {
-			strncpy(buf, my->match, my->match_len);
-			buf[my->match_len] = '\0';
-			printf("error looking up %s.\n", buf);
-		} else {
-			buf[r] = '\0';
-			printf("%s\n", buf);
-		}
-
-	}
-
+	define(&mydb, &list);
 }
