@@ -116,6 +116,9 @@ gz_ropen(char *path)
         if (s->z_buf == MAP_FAILED)
                 goto fail1;
 
+	s->z_stream.avail_in = s->z_buflen;
+	s->z_stream.next_in = s->z_buf;
+
 	/* read the .gz header */
 	if (get_header(s) != 0) {
 		gz_close(s);
@@ -166,7 +169,6 @@ get_header_extra_RA(gz_stream *s, int slen)
 	clen += get_byte(s)<<8;
 	ccount  = get_byte(s);
 	ccount += get_byte(s)<<8;
-	s->z_hlen += 6;
 	slen -= 6;
 
 	printf("slen=%u, ver=%u, clen=%u, ccount=%u\n", slen, ver, clen, ccount);
@@ -199,6 +201,7 @@ get_header_extra(gz_stream *s, int elen)
 	int slen;
 	int SI1, SI2;
 
+	printf("%s\n", __func__);
 	while(elen > 4) {
 		SI1 = get_byte(s);
 		SI2 = get_byte(s);
@@ -214,10 +217,12 @@ get_header_extra(gz_stream *s, int elen)
 			if (get_header_extra_RA(s, slen) != 0)
 				return -1;
 		} else {
-			while (slen-- != 0 && get_byte(s) != EOF)
-				s->z_hlen++;
+			while (slen-- != 0)
+				if (get_byte(s) == EOF)
+					return -1;
 		}
 
+		s->z_hlen += slen;
 		elen -= slen;
 	}
 
@@ -297,35 +302,51 @@ get_header(gz_stream *s)
 }
 
 int
-gz_read(void *cookie, char *buf, int len)
+gz_read(void *cookie, size_t off, char *out, size_t len)
 {
 	gz_stream *s = (gz_stream*)cookie;
+	char buf[65535] = { 0 };
+        size_t chunk;
 	uLong old_total_in;
-	u_char *start = buf; /* starting point for crc computation */
+	u_char *start = out; /* starting point for crc computation */
 	int error = Z_OK;
+
+        chunk = off / s->ra_clen;
+        off = off % s->ra_clen;
 
 	/* z_stream.total_in might overflow uLong. */
 	old_total_in = s->z_stream.total_in;
 
+printf("%s: next_in: z_hlen=%d ra_offset=%llu, chunk=%lu, ra_chunk=%hu, off=%lu, len=%lu\n",
+__func__, s->z_hlen, s->ra_offset[chunk], chunk, s->ra_chunks[chunk], off, len);
+
+	/* XXX: just do two chunks in case len goes over current chunk */
+        s->z_stream.next_in = s->z_buf + s->z_hlen + s->ra_offset[chunk];
+        s->z_stream.avail_in = s->ra_chunks[chunk];
 	s->z_stream.next_out = buf;
-	s->z_stream.avail_out = len;
+	s->z_stream.avail_out =  s->ra_clen; // len + off;
 
 	while (error == Z_OK && !s->z_eof && s->z_stream.avail_out != 0) {
 
 		if (s->z_stream.avail_in == 0)
 			break;
 
-		error = inflate(&(s->z_stream), Z_NO_FLUSH);
+		error = inflate(&(s->z_stream), Z_PARTIAL_FLUSH); // Z_NO_FLUSH);
+printf("inflate: %u\n", s->z_stream.avail_in);
 
 		if (error == Z_DATA_ERROR) {
+printf("inflate: %s\n", s->z_stream.msg );
+printf("at zdataerror\n"); // XXX
 			errno = EINVAL;
 			goto bad;
 		}
 		if (error == Z_BUF_ERROR) {
+printf("at zbuferr\n"); // XXX
 			errno = EIO;
 			goto bad;
 		}
 		if (error == Z_STREAM_END) {
+printf("at zstreamend\n"); // XXX
 			/* Check CRC and original size */
 			s->z_crc = crc32(s->z_crc, start,
 			    (uInt)(s->z_stream.next_out - start));
@@ -336,6 +357,7 @@ gz_read(void *cookie, char *buf, int len)
 				goto bad;
 			}
 			if (get_int32(s) != (u_int32_t)s->z_stream.total_out) {
+	printf("at eio\n"); // XXX
 				errno = EIO;
 				return -1;
 			}
@@ -354,13 +376,17 @@ gz_read(void *cookie, char *buf, int len)
 			error = Z_OK;
 		}
 	}
+/*
 	s->z_crc = crc32(s->z_crc, start,
 	    (uInt)(s->z_stream.next_out - start));
-	len -= s->z_stream.avail_out;
+*/
+	//len -= s->z_stream.avail_out;
+	memcpy(out, buf + off, len);
 	s->z_total_in += (uLong)(s->z_stream.total_in - old_total_in);
 	s->z_total_out += len;
 	return (len);
 bad:
+	printf("at bad\n"); // XXX
 	s->z_total_in += (uLong)(s->z_stream.total_in - old_total_in);
 	s->z_total_out += (len - s->z_stream.avail_out);
 	return (-1);

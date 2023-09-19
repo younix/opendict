@@ -145,15 +145,15 @@ index_parse_b64(const char *data, size_t *dest)
 
 	while (data[l] != '\t' && data[l] != '\n') l++;
 	assert(l <= 8);
-	strncpy(inbuf, data, l);
 
-	pad = 4 - (l % 4);
+	pad = 8 - l;
 	for (i = 0; i < pad; i++)
-		inbuf[l + i] = '=';
-	inbuf[l + i] = '\0';
+		inbuf[i] = 'A';
+	inbuf[8] = '\0';
+	strncpy(inbuf + pad, data, l);
 
-	decode_base64((unsigned char *)&outbuf, 6, inbuf);
-	*dest = le64toh(outbuf);
+	decode_base64(((unsigned char *)&outbuf) + 2, 6, inbuf);
+	*dest = be64toh(outbuf);
 
 	return l + 1;
 }
@@ -250,7 +250,8 @@ index_find(const char *req, const struct dc_index *idx,
 	const char *p, *n;
 	int r = 0;
 
-	n = p = index_bsearch(req, idx, compar);
+	if ((n = p = index_bsearch(req, idx, compar)) == NULL)
+		return -1;
 	do {
 		e = SLIST_NEXT(index_parse_line(p, e), entries);
 		r++;

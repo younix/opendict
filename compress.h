@@ -67,7 +67,7 @@ extern int z_close(void *, struct z_info *, const char *, struct stat *);
 
 extern void *gz_ropen(char *);
 extern void *gz_wopen(int, char *, int, u_int32_t);
-extern int gz_read(void *, char *, int);
+extern int gz_read(void *, size_t, char *, size_t);
 extern int gz_write(void *, const char *, int);
 extern int gz_close(void *);
 extern int gz_flush(void *, int);

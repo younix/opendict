@@ -25,24 +25,12 @@ database_open(char *path, struct dc_database *db)
 static int
 database_lookup(struct dc_index_entry *req, struct dc_database *db, char *out)
 {
-	char buf[65535];
-	size_t chunk, off;
+	char buf[65535] = { 0 };
 
-	gz_stream *s = db->data;
-	chunk = req->def_off / s->ra_clen;
-	off = req->def_off % s->ra_clen;
-
-	s->z_stream.next_in = 0;
-	s->z_stream.avail_in = 0;
-	s->z_stream.next_out = Z_NULL;
-	s->z_stream.avail_out = 0;
-
-	s->z_stream.next_in = s->z_buf + s->z_hlen + s->ra_offset[chunk];
-	s->z_stream.avail_in = s->ra_chunks[chunk];
-
-	gz_read(s, buf, s->ra_chunks[chunk]); /* set Z_PARTIAL_FLUSH? */
-
-	// shouldnt we just read req->def_len and multiple chunks?
+	int r = gz_read(db->data, req->def_off, buf, req->def_len); /* set Z_PARTIAL_FLUSH? */
+	for (size_t i = 0; i < req->def_len; i++)
+		printf("%c", buf[i]);
+	printf("\nr = %d\n", r);
 	return 0;
 }
 
@@ -69,7 +57,7 @@ main(void)
 
 	r = index_open("/home/mbuhl/Downloads/eng-deu/eng-deu.index", &myidx);
 	printf("open: %d\n", r);
-	r = index_prefix_find("shit", &myidx, &list);
+	r = index_prefix_find("00database", &myidx, &list);
 	SLIST_FOREACH(my, &list, entries) {
 		if (my->match == NULL)
 			break;
