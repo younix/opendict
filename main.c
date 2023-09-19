@@ -24,22 +24,23 @@
 #include "database.h"
 #include "index.h"
 
+#define MAX_RESULTS	1000
 int
 main(int argc, char *argv[])
 {
 	struct dc_database mydb;
 	struct dc_index_list list;
 	struct dc_index myidx;
-	struct dc_index_entry myr[100], *my;
-	char ans[256] = {0};
+	struct dc_index_entry myr[MAX_RESULTS], *my;
+	char buf[65535] = {0};
 	int i, r;
 
 	if (argc != 2)
 		return 1;
 
 	SLIST_INIT(&list);
-	memset(myr, 0, sizeof(struct dc_index_entry) * 100);
-	for (i = 0; i < 100; i++)
+	memset(myr, 0, sizeof(struct dc_index_entry) * MAX_RESULTS);
+	for (i = 0; i < MAX_RESULTS; i++)
 		SLIST_INSERT_HEAD(&list, &myr[i], entries);
 
 	r = database_open("/home/mbuhl/Downloads/eng-deu/eng-deu.dict.dz", &mydb);
@@ -53,12 +54,19 @@ main(int argc, char *argv[])
 	if (r < 0)
 		return 4;
 
+	printf("%d results\n", r);
 	SLIST_FOREACH(my, &list, entries) {
 		if (my->match == NULL)
 			break;
-		strncpy(ans, my->match, my->match_len);
-		ans[my->match_len] = '\0';
-		database_lookup(my, &mydb, ans);
+		if ((r = database_lookup(my, &mydb, buf)) == -1) {
+			strncpy(buf, my->match, my->match_len);
+			buf[my->match_len] = '\0';
+			printf("error looking up %s.\n", buf);
+		} else {
+			buf[r] = '\0';
+			printf("%s\n", buf);
+		}
+
 	}
 
 }

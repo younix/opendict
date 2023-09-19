@@ -304,22 +304,22 @@ gz_read(void *cookie, size_t off, char *out, size_t len)
 {
 	gz_stream *s = (gz_stream*)cookie;
 	char buf[65535] = { 0 };
-        size_t chunk;
+        size_t chunk, z_off;
 	uLong old_total_in;
 	u_char *start = out; /* starting point for crc computation */
 	int error = Z_OK;
 
-	if (off + len > s->z_buflen)
-		return -1;
-
         chunk = off / s->ra_clen;
         off = off % s->ra_clen;
+	z_off = s->z_hlen + s->ra_offset[chunk];
+	if (s->z_buflen < z_off + s->ra_chunks[chunk])
+		return -1;
 
 	/* z_stream.total_in might overflow uLong. */
 	old_total_in = s->z_stream.total_in;
 
 	/* XXX: just do two chunks in case len goes over current chunk */
-        s->z_stream.next_in = s->z_buf + s->z_hlen + s->ra_offset[chunk];
+        s->z_stream.next_in = s->z_buf + z_off;
         s->z_stream.avail_in = s->ra_chunks[chunk];
 	s->z_stream.next_out = buf;
 	s->z_stream.avail_out =  s->ra_clen; // len + off;

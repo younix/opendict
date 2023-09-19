@@ -250,29 +250,23 @@ index_find(const char *req, const struct dc_index *idx,
 	const char *p, *n;
 	int r = 0;
 
-	if ((n = p = index_bsearch(req, idx, compar)) == NULL)
+	if ((p = index_bsearch(req, idx, compar)) == NULL)
 		return -1;
 	do {
-		e = SLIST_NEXT(index_parse_line(p, e), entries);
-		r++;
-		if (e == NULL)
-			return r;
-		if (p == base)
-			break;
 		p--;
 		while (p > base && p[-1] != '\n') p--;
 	} while (compar(req, p) == 0);
 
-	while (n < end && n[0] != '\n') n++;
-	n++;
-	while (compar(req, n) == 0) {
-		e = SLIST_NEXT(index_parse_line(n, e), entries);
+	while (p < end && p[0] != '\n') p++;
+	p++;
+	while (compar(req, p) == 0) {
+		e = SLIST_NEXT(index_parse_line(p, e), entries);
 		r++;
 		if (e == NULL)
 			return r;
-		while (n < end && n[0] != '\n') n++;
-		n++;
-		if (n == end)
+		while (p < end && p[0] != '\n') p++;
+		p++;
+		if (p == end)
 			break;
 	}
 
