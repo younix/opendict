@@ -19,7 +19,9 @@
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "dictd.h"
 #include "database.h"
@@ -27,23 +29,48 @@
 
 #define MAX_RESULTS	1000
 
+static __dead void
+usage(void)
+{
+	fprintf(stderr, "usage: dict [-dm] word\n");
+	exit(1);
+}
+
+static void
+match(struct dc_index_list *l)
+{
+	struct dc_index_entry *e;
+	const char *prev_match;
+	int prev_len = 0;
+
+	SLIST_FOREACH(e, l, entries) {
+		if (e->match == NULL)
+			break;
+
+		if (prev_len == e->match_len
+		    && strncmp(prev_match, e->match, prev_len) == 0)
+			continue;
+		prev_len = e->match_len;
+		prev_match = e->match;
+
+		printf("- %.*s\n", e->match_len, e->match);
+	}
+}
+
 static void
 define(struct dc_database *db, struct dc_index_list *l)
 {
 	char buf[65535];
-	struct dc_index_entry *entry;
+	struct dc_index_entry *e;
 	int r;
 
-	SLIST_FOREACH(entry, l, entries) {
-		if (entry->match == NULL)
+	SLIST_FOREACH(e, l, entries) {
+		if (e->match == NULL)
 			break;
-		if ((r = database_lookup(entry, db, buf)) == -1) {
-			strncpy(buf, entry->match, entry->match_len);
-			buf[entry->match_len] = '\0';
-			printf("error looking up %s.\n", buf);
+		if ((r = database_lookup(e, db, buf)) == -1) {
+			printf("ERROR: %.*s\n", e->match_len, e->match);
 		} else {
-			buf[r] = '\0';
-			printf("%s\n", buf);
+			printf("- %.*s", r, buf);
 		}
 	}
 }
@@ -53,28 +80,55 @@ main(int argc, char *argv[])
 {
 	struct dc_database mydb;
 	struct dc_index_list list;
-	struct dc_index myidx;
 	struct dc_index_entry myr[MAX_RESULTS];
-	int i, r;
+	int dflag = 0, mflag = 0, ch, i, r;
 
-	if (argc != 2)
+	while ((ch = getopt(argc, argv, "dm")) != -1) {
+		switch (ch) {
+		case 'd':
+			dflag = 1;
+			break;
+		case 'm':
+			mflag = 1;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
 		return 1;
+
+	if (!dflag)
+		mflag = 1;
 
 	SLIST_INIT(&list);
 	memset(myr, 0, sizeof(struct dc_index_entry) * MAX_RESULTS);
 	for (i = 0; i < MAX_RESULTS; i++)
 		SLIST_INSERT_HEAD(&list, &myr[i], entries);
 
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
+
 	r = database_open("/home/mbuhl/Downloads/eng-deu/eng-deu.dict.dz", &mydb);
 	if (r != 0)
 		return 2;
-	r = index_open("/home/mbuhl/Downloads/eng-deu/eng-deu.index", &myidx);
+
+	r = index_open("/home/mbuhl/Downloads/eng-deu/eng-deu.index", &mydb.index);
 	if (r != 0)
 		return 3;
 
-	r = index_prefix_find(argv[1], &myidx, &list);
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
+	r = index_prefix_find(argv[0], &mydb.index, &list);
 	if (r < 0)
 		return 4;
 
-	define(&mydb, &list);
+	if (mflag)
+		match(&list);
+	if (dflag)
+		define(&mydb, &list);
 }

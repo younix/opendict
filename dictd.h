@@ -14,13 +14,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/queue.h>
+
 #define MAXIMUM(a,b)	(((a)>(b))?(a):(b))
 #define MINIMUM(a,b)	(((a)<(b))?(a):(b))
 
 SLIST_HEAD(dc_index_list, dc_index_entry);
 struct dc_index_entry {
 	const char 			*match; // XXX: do we really need this?
-	size_t				 match_len; // XXX: same
+	int				 match_len; // XXX: same
 	size_t				 def_off;
 	size_t				 def_len;
 	SLIST_ENTRY(dc_index_entry)	 entries;
@@ -33,7 +35,7 @@ struct dc_index {
 
 struct dc_database {
 	char				*name;
-	struct dc_index			*index;
 	void				*data;
+	struct dc_index			 index;
 	TAILQ_ENTRY(dc_database)	 entry;
 };

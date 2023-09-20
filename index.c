@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <err.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <string.h>
 
 #include "dictd.h"
@@ -150,7 +151,7 @@ index_parse_b64(const char *data, size_t *dest)
 	for (i = 0; i < pad; i++)
 		inbuf[i] = 'A';
 	inbuf[8] = '\0';
-	strncpy(inbuf + pad, data, l);
+	bcopy(data, inbuf + pad, l);
 
 	decode_base64(((unsigned char *)&outbuf) + 2, 6, inbuf);
 	*dest = be64toh(outbuf);
@@ -167,6 +168,8 @@ index_parse_line(const char *line, struct dc_index_entry *e)
 	e->match = line;
 
 	while (line[l] != '\t') l++;
+	if (l > INT_MAX)
+		l = INT_MAX;
 	e->match_len = l;
 
 	data = line + l + 1;
