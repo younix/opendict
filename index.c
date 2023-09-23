@@ -32,7 +32,7 @@ index_open(char *path, struct dc_index *idx)
 {
 	struct stat sb;
 	off_t i;
-	int fd, tabs = 0, b64len = 0;
+	int fd, tabs = 0, b64len = -1;
 	char c;
 
 	if ((fd = open(path, O_RDONLY)) == -1)
@@ -50,6 +50,8 @@ index_open(char *path, struct dc_index *idx)
 		if (c == '\t') {
 			if (b64len > 8)
 				errx(1, "index offsets are too big");
+			else if (b64len == 0)
+				errx(1, "index offsets are missing");
 			tabs++;
 			b64len = 0;
 			if (tabs > 2)
@@ -72,89 +74,31 @@ index_open(char *path, struct dc_index *idx)
 	return 0;
 }
 
-static const u_int8_t Base64Code[] =
-"+/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-static const u_int8_t index_64[128] = {
-        255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-        255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-        255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-        255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-        255, 255, 255, 62, 255, 255, 255, 63, 52, 53,
-        54, 55, 56, 57, 58, 59, 60, 61, 255, 255,
-        255, 255, 255, 255, 255, 0, 1, 2, 3, 4,
-        5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-	15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-	25, 255, 255, 255, 255, 255, 255, 26, 27, 28,
-        29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
-	39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
-	49, 50, 51, 255, 255, 255, 255, 255
-};
-
-#define CHAR64(c)  ( (c) > 127 ? 255 : index_64[(c)])
-
-/*
- * read buflen (after decoding) bytes of data from b64data
- */
-static int
-decode_base64(u_int8_t *buffer, size_t len, const char *b64data)
-{
-	u_int8_t *bp = buffer;
-	const u_int8_t *p = b64data;
-	u_int8_t c1, c2, c3, c4;
-
-	while (bp < buffer + len) {
-		c1 = CHAR64(*p);
-		/* Invalid data */
-		if (c1 == 255)
-			return -1;
-
-		c2 = CHAR64(*(p + 1));
-		if (c2 == 255)
-			return -1;
-
-		*bp++ = (c1 << 2) | ((c2 & 0x30) >> 4);
-		if (bp >= buffer + len)
-			break;
-
-		c3 = CHAR64(*(p + 2));
-		if (c3 == 255)
-			return -1;
-
-		*bp++ = ((c2 & 0x0f) << 4) | ((c3 & 0x3c) >> 2);
-		if (bp >= buffer + len)
-			break;
-
-		c4 = CHAR64(*(p + 3));
-		if (c4 == 255)
-			return -1;
-		*bp++ = ((c3 & 0x03) << 6) | c4;
-
-		p += 4;
-	}
-	return 0;
-}
-
-
 static size_t
-index_parse_b64(const char *data, size_t *dest)
+index_parse_b64(const char *data, size_t *res)
 {
-	char inbuf[9];
-	uint64_t outbuf = 0;
-	size_t l = 0;
-	int i, pad;
+	char c;
+	int i, l = 0;
 
-	while (data[l] != '\t' && data[l] != '\n') l++;
-	assert(l <= 8);
+	while (data[l + 1] != '\t' && data[l + 1] != '\n') l++;
 
-	pad = 8 - l;
-	for (i = 0; i < pad; i++)
-		inbuf[i] = 'A';
-	inbuf[8] = '\0';
-	bcopy(data, inbuf + pad, l);
+	for (i = 0; i < l; i++) {
+		c = data[l - i];
+		if (c == '+') {
+			c = 62;
+		} else if (c == '/') {
+			c = 63;
+		} else if (c >= '0' && c <= '9') {
+			c += 4;
+		} else if (c >= 'A' && c <= 'Z') {
+			c -= 65;
+		} else if (c >= 'a' && c <= 'z') {
+			c -= 71;
+		} else
+			errx(1, "not base 64");
 
-	decode_base64(((unsigned char *)&outbuf) + 2, 6, inbuf);
-	*dest = be64toh(outbuf);
+		res += c << (i * 6);
+	}
 
 	return l + 1;
 }
@@ -250,7 +194,7 @@ index_find(const char *req, const struct dc_index *idx,
 	const char *base = idx->data;
 	const char *end = idx->data + idx->size;
 	struct dc_index_entry *e = SLIST_FIRST(lst);
-	const char *p, *n;
+	const char *p;
 	int r = 0;
 
 	if ((p = index_bsearch(req, idx, compar)) == NULL)
