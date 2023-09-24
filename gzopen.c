@@ -75,6 +75,8 @@
 #include "compress.h"
 #include "gzopen.h"
 
+#define MINIMUM(a,b)	(((a)<(b))?(a):(b))
+
 /* gzip flag byte */
 #define ASCII_FLAG   0x01 /* bit 0 set: file probably ascii text */
 #define HEAD_CRC     0x02 /* bit 1 set: header CRC present */
@@ -97,24 +99,23 @@ gz_ropen(char *path)
 {
 	struct stat sb;
 	gz_stream *s;
+	int fd = -1;
 
 	if ((s = calloc(1, sizeof(gz_stream))) == NULL)
 		return NULL;
 
-	s->z_crc = crc32(0L, Z_NULL, 0);
-
 	if (inflateInit2(&(s->z_stream), -MAX_WBITS) != Z_OK)
-                goto fail1;
+		goto fail1;
 
-        if ((s->z_fd = open(path, O_RDONLY)) == -1)
-                goto fail1;
-        if (fstat(s->z_fd, &sb) == -1)
-                goto fail1;
-        s->z_buflen = sb.st_size;
+	if ((fd = open(path, O_RDONLY)) == -1)
+		goto fail1;
+	if (fstat(fd, &sb) == -1)
+		goto fail2;
+	s->z_buflen = sb.st_size;
 
-	s->z_buf = mmap(NULL, s->z_buflen, PROT_READ, MAP_PRIVATE, s->z_fd, 0);
-        if (s->z_buf == MAP_FAILED)
-                goto fail1;
+	s->z_buf = mmap(NULL, s->z_buflen, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (s->z_buf == MAP_FAILED)
+		goto fail2;
 
 	s->z_stream.avail_in = s->z_buflen;
 	s->z_stream.next_in = s->z_buf;
@@ -126,6 +127,9 @@ gz_ropen(char *path)
 	}
 
 	return s;
+
+ fail2:
+	close(fd);
  fail1:
 	free(s);
 	return NULL;
@@ -303,84 +307,55 @@ int
 gz_read(void *cookie, size_t off, char *out, size_t len)
 {
 	gz_stream *s = (gz_stream*)cookie;
-	char buf[65535] = { 0 };
-        size_t chunk, z_off;
-	uLong old_total_in;
-	u_char *start = out; /* starting point for crc computation */
+	char buf[65535];
+	size_t chunk, z_off, cpylen;
 	int error = Z_OK;
 
-        chunk = off / s->ra_clen;
-        off = off % s->ra_clen;
+	chunk = off / s->ra_clen;
+	off = off % s->ra_clen;
+
+ again:
 	z_off = s->z_hlen + s->ra_offset[chunk];
 	if (s->z_buflen < z_off + s->ra_chunks[chunk])
 		return -1;
 
-	/* z_stream.total_in might overflow uLong. */
-	old_total_in = s->z_stream.total_in;
-
-	/* XXX: just do two chunks in case len goes over current chunk */
-        s->z_stream.next_in = s->z_buf + z_off;
-        s->z_stream.avail_in = s->ra_chunks[chunk];
+	s->z_stream.next_in = s->z_buf + z_off;
+	s->z_stream.avail_in = s->ra_chunks[chunk];
 	s->z_stream.next_out = buf;
-	s->z_stream.avail_out =  s->ra_clen; // len + off;
+	s->z_stream.avail_out = s->ra_clen;
 
 	while (error == Z_OK && !s->z_eof && s->z_stream.avail_out != 0) {
 
 		if (s->z_stream.avail_in == 0)
 			break;
 
-		error = inflate(&(s->z_stream), Z_PARTIAL_FLUSH); // Z_NO_FLUSH);
+		error = inflate(&(s->z_stream), Z_PARTIAL_FLUSH);
 
 		if (error == Z_DATA_ERROR) {
 			errno = EINVAL;
 			goto bad;
-		}
-		if (error == Z_BUF_ERROR) {
+		} else if (error == Z_BUF_ERROR) {
 			errno = EIO;
 			goto bad;
-		}
-		if (error == Z_STREAM_END) {
-			/* Check CRC and original size */
-			s->z_crc = crc32(s->z_crc, start,
-			    (uInt)(s->z_stream.next_out - start));
-			start = s->z_stream.next_out;
-
-			if (get_int32(s) != s->z_crc) {
-				errno = EINVAL;
-				goto bad;
-			}
-			if (get_int32(s) != (u_int32_t)s->z_stream.total_out) {
-				errno = EIO;
-				return -1;
-			}
-			s->z_hlen += 2 * sizeof(int32_t);
-
-			/* Check for the existence of an appended file. */
-			if (get_header(s) != 0) {
-				s->z_eof = 1;
-				break;
-			}
-			s->z_total_in += (uLong)(s->z_stream.total_in -
-			    old_total_in);
-			inflateReset(&(s->z_stream));
-			s->z_crc = crc32(0L, Z_NULL, 0);
-			old_total_in = 0;
-			error = Z_OK;
+		} else if (error == Z_STREAM_END) {
+			s->z_eof = 1;
+			inflateReset(&(s->z_stream)); // XXX
+			break;
 		}
 	}
-/*
-	s->z_crc = crc32(s->z_crc, start,
-	    (uInt)(s->z_stream.next_out - start));
-*/
-	//len -= s->z_stream.avail_out;
-	memcpy(out, buf + off, len);
-	s->z_total_in += (uLong)(s->z_stream.total_in - old_total_in);
-	s->z_total_out += len;
-	return (len);
-bad:
-	s->z_total_in += (uLong)(s->z_stream.total_in - old_total_in);
-	s->z_total_out += (len - s->z_stream.avail_out);
-	return (-1);
+
+	cpylen = MINIMUM(len, s->ra_clen - off);
+	memcpy(out, buf + off, cpylen);
+	len -= cpylen;
+	out += cpylen;
+	chunk++;
+	off = 0;
+	if (len > 0)
+		goto again;
+
+	return len;
+ bad:
+	return -1;
 }
 
 int
@@ -395,11 +370,6 @@ gz_close(void *cookie)
 	if (!err && s->z_stream.state != NULL) {
 		err = inflateEnd(&s->z_stream);
 	}
-
-	if (!err)
-		err = close(s->z_fd);
-	else
-		(void)close(s->z_fd);
 
 	if (!err)
 		err = munmap(s->z_buf, s->z_buflen);

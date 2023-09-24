@@ -60,16 +60,12 @@
 
 typedef
 struct gz_stream {
-	int	z_fd;		/* .gz file */
 	int	z_eof;		/* set if end of input file */
 	z_stream z_stream;	/* libz stream */
 	u_char	*z_buf;		/* i/o buffer */
 	size_t	z_buflen;
 	u_int32_t z_time;	/* timestamp (mtime) */
-	u_int32_t z_crc;	/* crc32 of uncompressed data */
 	u_int32_t z_hlen;	/* length of the gz header */
-	u_int64_t z_total_in;	/* # bytes in */
-	u_int64_t z_total_out;	/* # bytes out */
 	u_int16_t ra_clen;
 	u_int16_t ra_ccount;
 	u_int16_t *ra_chunks;
