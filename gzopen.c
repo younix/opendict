@@ -332,18 +332,14 @@ gz_read(void *cookie, size_t off, char *out, size_t len)
 		error = inflate(&(s->z_stream), Z_PARTIAL_FLUSH); // Z_NO_FLUSH);
 
 		if (error == Z_DATA_ERROR) {
-printf("inflate: %s\n", s->z_stream.msg );
-printf("at zdataerror\n"); // XXX
 			errno = EINVAL;
 			goto bad;
 		}
 		if (error == Z_BUF_ERROR) {
-printf("at zbuferr\n"); // XXX
 			errno = EIO;
 			goto bad;
 		}
 		if (error == Z_STREAM_END) {
-printf("at zstreamend\n"); // XXX
 			/* Check CRC and original size */
 			s->z_crc = crc32(s->z_crc, start,
 			    (uInt)(s->z_stream.next_out - start));
@@ -354,7 +350,6 @@ printf("at zstreamend\n"); // XXX
 				goto bad;
 			}
 			if (get_int32(s) != (u_int32_t)s->z_stream.total_out) {
-	printf("at eio\n"); // XXX
 				errno = EIO;
 				return -1;
 			}
@@ -383,7 +378,6 @@ printf("at zstreamend\n"); // XXX
 	s->z_total_out += len;
 	return (len);
 bad:
-	printf("at bad\n"); // XXX
 	s->z_total_in += (uLong)(s->z_stream.total_in - old_total_in);
 	s->z_total_out += (len - s->z_stream.avail_out);
 	return (-1);
