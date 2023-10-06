@@ -24,7 +24,7 @@ int
 database_open(char *path, struct dc_database *db)
 {
 	if ((db->data = gz_ropen(path)) == NULL)
-		return 1;
+		return -1;
 
 	return 0;
 }
@@ -38,7 +38,6 @@ database_lookup(struct dc_index_entry *req, struct dc_database *db, char *out)
 		return -1;
 
 	if ((size_t)r != req->def_len) {
-		printf("SHORT READ!");
 		return -1;
 	}
 

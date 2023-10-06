@@ -79,6 +79,7 @@ index_parse_b64(const char *data, size_t *res)
 {
 	char c;
 	int i, l = 0;
+	*res = 0;
 
 	while (data[l + 1] != '\t' && data[l + 1] != '\n') l++;
 
@@ -97,7 +98,7 @@ index_parse_b64(const char *data, size_t *res)
 		} else
 			errx(1, "not base 64");
 
-		res += c << (i * 6);
+		*res += c << (i * 6);
 	}
 
 	return l + 1;
