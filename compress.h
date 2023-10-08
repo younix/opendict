@@ -27,60 +27,7 @@
  *
  */
 
-#include <sys/stat.h>
-
-struct z_info {
-	u_int32_t mtime;	/* timestamp */
-	u_int32_t crc;		/* crc */
-	u_int32_t hlen;		/* header length */
-	u_int64_t total_in;	/* # bytes in */
-	u_int64_t total_out;	/* # bytes out */
-};
-
-/*
- * making it any bigger does not affect performance very much.
- * actually this value is just a little bit better than 8192.
- */
-#define Z_BUFSIZE 16384
-
-enum program_mode {
-	MODE_COMP,
-	MODE_DECOMP,
-	MODE_CAT
-};
-
-/*
- * exit codes for compress
- */
-#define	SUCCESS	0
-#define	FAILURE	1
-#define	WARNING	2
-
-extern char null_magic[];
-
-extern void *z_ropen(int, char *, int);
-extern void *z_wopen(int, char *, int, u_int32_t);
-extern FILE *zopen(const char *, const char *,int);
-extern int zread(void *, char *, int);
-extern int zwrite(void *, const char *, int);
-extern int z_close(void *, struct z_info *, const char *, struct stat *);
-
 extern void *gz_ropen(char *);
-extern void *gz_wopen(int, char *, int, u_int32_t);
 extern int gz_read(void *, size_t, char *, size_t);
-extern int gz_write(void *, const char *, int);
 extern int gz_close(void *);
-extern int gz_flush(void *, int);
 
-extern void *zip_ropen(int, char *, int);
-extern int zip_read(void *, char *, int);
-extern int zip_close(void *, struct z_info *, const char *, struct stat *);
-
-extern void *null_ropen(int, char *, int);
-extern void *null_wopen(int, char *, int, u_int32_t);
-extern int null_read(void *, char *, int);
-extern int null_write(void *, const char *, int);
-extern int null_close(void *, struct z_info *, const char *, struct stat *);
-extern int null_flush(void *, int);
-
-extern void setfile(const char *, int, struct stat *);
