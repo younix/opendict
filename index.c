@@ -117,7 +117,7 @@ index_parse_line(const char *line, struct dc_index_entry *e)
 		l = INT_MAX;
 	e->match_len = l;
 
-	data = line + l + 1;
+	data = line + l;
 	data += index_parse_b64(data, &e->def_off);
 	index_parse_b64(data, &e->def_len);
 
