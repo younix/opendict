@@ -32,7 +32,7 @@
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: dict [-dm] word\n");
+	fprintf(stderr, "usage: dict -D database [-dm] word\n");
 	exit(1);
 }
 
@@ -81,10 +81,17 @@ main(int argc, char *argv[])
 	struct dc_database mydb;
 	struct dc_index_list list;
 	struct dc_index_entry myr[MAX_RESULTS];
+	char *db_path = NULL, *idx_path = NULL;
 	int dflag = 0, mflag = 0, ch, i, r;
 
-	while ((ch = getopt(argc, argv, "dm")) != -1) {
+	while ((ch = getopt(argc, argv, "D:dm")) != -1) {
 		switch (ch) {
+		case 'D':
+			asprintf(&db_path, "/usr/local/freedict/%s/%s.dict.dz",
+			    optarg, optarg);
+			asprintf(&idx_path, "/usr/local/freedict/%s/%s.index",
+			    optarg, optarg);
+			break;
 		case 'd':
 			dflag = 1;
 			break;
@@ -101,23 +108,28 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		return 1;
 
+	if (db_path == NULL || idx_path == NULL)
+		usage();
+
 	if (!dflag)
 		mflag = 1;
+
+	if (unveil("/usr/local/freedict", "r") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	SLIST_INIT(&list);
 	memset(myr, 0, sizeof(struct dc_index_entry) * MAX_RESULTS);
 	for (i = 0; i < MAX_RESULTS; i++)
 		SLIST_INSERT_HEAD(&list, &myr[i], entries);
 
-	if (pledge("stdio rpath", NULL) == -1)
-		err(1, "pledge");
-
-	r = database_open("/home/mbuhl/Downloads/eng-deu/eng-deu.dict.dz", &mydb);
-	if (r != 0)
+	if ((r = database_open(db_path, &mydb)) != 0)
 		return 2;
 
-	r = index_open("/home/mbuhl/Downloads/eng-deu/eng-deu.index", &mydb.index);
-	if (r != 0)
+	if ((r = index_open(idx_path, &mydb.index)) != 0)
 		return 3;
 
 	if (pledge("stdio", NULL) == -1)
