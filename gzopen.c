@@ -353,7 +353,7 @@ gz_read(void *cookie, size_t off, char *out, size_t len)
 	if (len > 0)
 		goto again;
 
-	return len;
+	return 0;
  bad:
 	return -1;
 }

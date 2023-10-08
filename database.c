@@ -32,14 +32,8 @@ database_open(char *path, struct dc_database *db)
 int
 database_lookup(struct dc_index_entry *req, struct dc_database *db, char *out)
 {
-	int r;
-
-	if ((r = gz_read(db->data, req->def_off, out, req->def_len)) == -1)
+	if (gz_read(db->data, req->def_off, out, req->def_len) == -1)
 		return -1;
 
-	if ((size_t)r != req->def_len) {
-		return -1;
-	}
-
-	return r;
+	return req->def_len;
 }
