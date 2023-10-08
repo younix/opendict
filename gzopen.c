@@ -307,7 +307,7 @@ int
 gz_read(void *cookie, size_t off, char *out, size_t len)
 {
 	gz_stream *s = (gz_stream*)cookie;
-	char buf[65535];
+	char buf[65535]; /* ra_chunks are unsigned short */
 	size_t chunk, z_off, cpylen;
 	int error = Z_OK;
 
