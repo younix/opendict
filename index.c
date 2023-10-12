@@ -203,7 +203,7 @@ index_find(const char *req, const struct dc_index *idx,
 	do {
 		p--;
 		while (p > base && p[-1] != '\n') p--;
-	} while (compar(req, p) == 0);
+	} while (compar(req, p) == 0 && p > base);
 
 	while (p < end && p[0] != '\n') p++;
 	p++;
