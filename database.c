@@ -404,6 +404,7 @@ gz_close(void *cookie)
 		(void)munmap(s->z_buf, s->z_buflen);
 
 	free(s->ra_chunks);
+	free(s->ra_offset);
 	free(s);
 
 	return err;
