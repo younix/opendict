@@ -21,7 +21,6 @@
 #include <assert.h>
 #include <err.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <string.h>
 
 #include "dict.h"
@@ -123,8 +122,8 @@ index_parse_line(const char *line, struct dc_index_entry *e)
 	e->match = line;
 
 	while (line[l] != '\t') l++;
-	if (l > INT_MAX)
-		l = INT_MAX;
+	if (l > WORD_MAX)
+		l = WORD_MAX;
 	e->match_len = l;
 
 	data = line + l;

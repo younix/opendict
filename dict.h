@@ -16,13 +16,15 @@
 
 #include <sys/queue.h>
 
+#define WORD_MAX	4096
+
 #define MAXIMUM(a,b)	(((a)>(b))?(a):(b))
 #define MINIMUM(a,b)	(((a)<(b))?(a):(b))
 
 SLIST_HEAD(dc_index_list, dc_index_entry);
 struct dc_index_entry {
 	const char 			*match;
-	int				 match_len;
+	uint16_t			 match_len;
 	size_t				 def_off;
 	size_t				 def_len;
 	SLIST_ENTRY(dc_index_entry)	 entries;
