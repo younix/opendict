@@ -21,8 +21,8 @@
 
 SLIST_HEAD(dc_index_list, dc_index_entry);
 struct dc_index_entry {
-	const char 			*match; // XXX: do we really need this?
-	int				 match_len; // XXX: same
+	const char 			*match;
+	int				 match_len;
 	size_t				 def_off;
 	size_t				 def_len;
 	SLIST_ENTRY(dc_index_entry)	 entries;
