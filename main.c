@@ -16,6 +16,7 @@
 
 #include <sys/mman.h>
 #include <assert.h>
+#include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -83,6 +84,7 @@ main(int argc, char *argv[])
 	struct dc_index_list list;
 	struct dc_index_entry myr[MAX_RESULTS];
 	char *db_path = NULL, *idx_path = NULL;
+	char *lookup;
 	int ch, i;
 	int Vflag = 0, dflag = 0, mflag = 0;
 
@@ -136,7 +138,11 @@ main(int argc, char *argv[])
 
 	if (!Vflag && index_validate(&mydb.index, mydb.size) == -1)
 		errx(1, "index_validate");
-	if (index_prefix_find(argv[0], &mydb.index, &list) == -1)
+	if ((lookup = strdup(argv[0])) == NULL)
+		errx(1, "strdup");
+	for (i = 0; lookup[i] != '\0'; i++)
+		lookup[i] = tolower(lookup[i]);
+	if (index_prefix_find(lookup, &mydb.index, &list) == -1)
 		errx(1, "index_prefix_find");
 
 	if (mflag)
