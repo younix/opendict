@@ -48,7 +48,7 @@ match(struct dc_index_list *l)
 		if (e->match == NULL)
 			break;
 
-		if (prev_len == e->match_len
+		if (prev_len > 0 && prev_len == e->match_len
 		    && strncmp(prev_match, e->match, prev_len) == 0)
 			continue;
 		prev_len = e->match_len;
