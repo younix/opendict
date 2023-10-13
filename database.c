@@ -350,6 +350,8 @@ gz_read(void *cookie, size_t off, char *out, size_t len)
 	off = off % s->ra_clen;
 
  again:
+	if (chunk >= s->ra_ccount)
+		return -1;
 	z_off = s->z_hlen + s->ra_offset[chunk];
 	if (s->z_buflen < z_off + s->ra_chunks[chunk])
 		return -1;
