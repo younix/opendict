@@ -100,6 +100,7 @@ struct gz_stream {
 
 static const u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 
+static u_int16_t get_int16(gz_stream *);
 static u_int32_t get_int32(gz_stream *);
 static int get_header(gz_stream *);
 static int get_byte(gz_stream *);
@@ -181,6 +182,16 @@ get_byte(gz_stream *s)
 	return *s->z_stream.next_in++;
 }
 
+static u_int16_t
+get_int16(gz_stream *s)
+{
+	u_int16_t x;
+
+	x  = ((u_int16_t)(get_byte(s) & 0xff));
+	x |= ((u_int16_t)(get_byte(s) & 0xff))<<8;
+	return x;
+}
+
 static u_int32_t
 get_int32(gz_stream *s)
 {
@@ -202,12 +213,9 @@ get_header_extra_RA(gz_stream *s, int slen)
 	if (slen < 6)
 		return -1;
 
-	ver  = get_byte(s);
-	ver += get_byte(s)<<8;
-	clen  = get_byte(s);
-	clen += get_byte(s)<<8;
-	ccount  = get_byte(s);
-	ccount += get_byte(s)<<8;
+	ver = get_int16(s);
+	clen = get_int16(s);
+	ccount = get_int16(s);
 	slen -= 6;
 
 	if (ver != 1 || clen < 0 || ccount < 0 || 2 *  ccount != slen)
@@ -221,8 +229,7 @@ get_header_extra_RA(gz_stream *s, int slen)
 		return -1;
 
 	for (i = 0; i < ccount; i++) {
-		chunk  = get_byte(s);
-		chunk += get_byte(s)<<8;
+		chunk = get_int16(s);
 		if (chunk < 0)
 			return -1;
 		s->ra_chunks[i] = chunk;
@@ -242,8 +249,7 @@ get_header_extra(gz_stream *s, int elen)
 	while(elen > 4) {
 		SI1 = get_byte(s);
 		SI2 = get_byte(s);
-		slen  = get_byte(s);
-		slen += get_byte(s)<<8;
+		slen = get_int16(s);
 		s->z_hlen += 4;
 		elen -= 4;
 
@@ -296,13 +302,11 @@ get_header(gz_stream *s)
 	s->z_time = get_int32(s);
 
 	/* Discard xflags and OS code */
-	(void)get_byte(s);
-	(void)get_byte(s);
+	(void)get_int16(s);
 
 	s->z_hlen += 10; /* magic, method, flags, time, xflags, OS code */
 	if ((flags & EXTRA_FIELD) != 0) {
-		len  =  (uInt)get_byte(s);
-		len += ((uInt)get_byte(s))<<8;
+		len = get_int16(s);
 		s->z_hlen += 2;
 		if (get_header_extra(s, len) != 0)
 			return -1;
@@ -325,8 +329,7 @@ get_header(gz_stream *s)
 	}
 
 	if ((flags & HEAD_CRC) != 0) {  /* skip the header crc */
-		(void)get_byte(s);
-		(void)get_byte(s);
+		(void)get_int16(s);
 		s->z_hlen += 2;
 	}
 
