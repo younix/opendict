@@ -90,7 +90,6 @@ struct gz_stream {
 	z_stream z_stream;	/* libz stream */
 	u_char	*z_buf;		/* i/o buffer */
 	size_t	z_buflen;
-	u_int32_t z_time;	/* timestamp (mtime) */
 	u_int32_t z_hlen;	/* length of the gz header */
 	u_int16_t ra_clen;
 	u_int16_t ra_ccount;
@@ -101,7 +100,6 @@ struct gz_stream {
 static const u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 
 static u_int16_t get_int16(gz_stream *);
-static u_int32_t get_int32(gz_stream *);
 static int get_header(gz_stream *);
 static int get_byte(gz_stream *);
 static void *gz_ropen(char *);
@@ -189,18 +187,6 @@ get_int16(gz_stream *s)
 
 	x  = ((u_int16_t)(get_byte(s) & 0xff));
 	x |= ((u_int16_t)(get_byte(s) & 0xff))<<8;
-	return x;
-}
-
-static u_int32_t
-get_int32(gz_stream *s)
-{
-	u_int32_t x;
-
-	x  = ((u_int32_t)(get_byte(s) & 0xff));
-	x |= ((u_int32_t)(get_byte(s) & 0xff))<<8;
-	x |= ((u_int32_t)(get_byte(s) & 0xff))<<16;
-	x |= ((u_int32_t)(get_byte(s) & 0xff))<<24;
 	return x;
 }
 
@@ -299,7 +285,8 @@ get_header(gz_stream *s)
 	}
 
 	/* Stash timestamp (mtime) */
-	s->z_time = get_int32(s);
+	(void)get_int16(s);
+	(void)get_int16(s);
 
 	/* Discard xflags and OS code */
 	(void)get_int16(s);
