@@ -24,7 +24,7 @@
 #include <limits.h>
 #include <string.h>
 
-#include "dictd.h"
+#include "dict.h"
 #include "index.h"
 
 int

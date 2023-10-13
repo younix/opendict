@@ -73,7 +73,7 @@
 
 #include <zlib.h>
 
-#include "dictd.h"
+#include "dict.h"
 #include "database.h"
 
 /* gzip flag byte */

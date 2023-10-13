@@ -23,7 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "dictd.h"
+#include "dict.h"
 #include "database.h"
 #include "index.h"
 
