@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 	struct dc_index_list list;
 	struct dc_index_entry myr[MAX_RESULTS];
 	char *db_path = NULL, *idx_path = NULL;
-	int dflag = 0, mflag = 0, ch, i, r;
+	int dflag = 0, mflag = 0, ch, i;
 
 	while ((ch = getopt(argc, argv, "D:dm")) != -1) {
 		switch (ch) {
@@ -121,16 +121,16 @@ main(int argc, char *argv[])
 	for (i = 0; i < MAX_RESULTS; i++)
 		SLIST_INSERT_HEAD(&list, &myr[i], entries);
 
-	if ((r = database_open(db_path, &mydb)) != 0)
+	if (database_open(db_path, &mydb) != 0)
 		errx(1, "database_open");
 
-	if ((r = index_open(idx_path, &mydb.index)) != 0)
+	if (index_open(idx_path, &mydb.index) != 0)
 		errx(1, "index_open");
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	if (index_prefix_find(argv[0], &mydb.index, &list) < 0)
+	if (index_prefix_find(argv[0], &mydb.index, &list) == -1)
 		errx(1, "index_prefix_find");
 
 	if (mflag)
