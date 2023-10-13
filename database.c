@@ -95,6 +95,7 @@ struct gz_stream {
 	u_int16_t ra_ccount;
 	u_int16_t *ra_chunks;
 	u_int64_t *ra_offset;
+	char	  *o_buf;
 } gz_stream;
 
 static const u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
@@ -155,7 +156,7 @@ gz_ropen(char *path)
 	s->z_stream.next_in = s->z_buf;
 
 	/* read the .gz header */
-	if (get_header(s) != 0) {
+	if (get_header(s) != 0 || (s->o_buf = malloc(65535)) == NULL) {
 		gz_close(s);
 		return NULL;
 	}
@@ -332,7 +333,6 @@ static int
 gz_read(void *cookie, size_t off, char *out, size_t len)
 {
 	gz_stream *s = (gz_stream*)cookie;
-	char buf[65535]; /* ra_chunks are unsigned short */
 	size_t chunk, z_off, cpylen;
 	int error = Z_OK;
 
@@ -348,7 +348,7 @@ gz_read(void *cookie, size_t off, char *out, size_t len)
 
 	s->z_stream.next_in = s->z_buf + z_off;
 	s->z_stream.avail_in = s->ra_chunks[chunk];
-	s->z_stream.next_out = buf;
+	s->z_stream.next_out = s->o_buf;
 	s->z_stream.avail_out = s->ra_clen;
 
 	while (error == Z_OK && !s->z_eof && s->z_stream.avail_out != 0) {
@@ -372,7 +372,7 @@ gz_read(void *cookie, size_t off, char *out, size_t len)
 	}
 
 	cpylen = MINIMUM(len, s->ra_clen - off);
-	memcpy(out, buf + off, cpylen);
+	memcpy(out, s->o_buf + off, cpylen);
 	len -= cpylen;
 	out += cpylen;
 	chunk++;
@@ -405,6 +405,7 @@ gz_close(void *cookie)
 
 	free(s->ra_chunks);
 	free(s->ra_offset);
+	free(s->o_buf);
 	free(s);
 
 	return err;
