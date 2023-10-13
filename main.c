@@ -122,17 +122,16 @@ main(int argc, char *argv[])
 		SLIST_INSERT_HEAD(&list, &myr[i], entries);
 
 	if ((r = database_open(db_path, &mydb)) != 0)
-		return 2;
+		errx(1, "database_open");
 
 	if ((r = index_open(idx_path, &mydb.index)) != 0)
-		return 3;
+		errx(1, "index_open");
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	r = index_prefix_find(argv[0], &mydb.index, &list);
-	if (r < 0)
-		return 4;
+	if (index_prefix_find(argv[0], &mydb.index, &list) < 0)
+		errx(1, "index_prefix_find");
 
 	if (mflag)
 		match(&list);
