@@ -72,9 +72,8 @@
 
 #include <zlib.h>
 
-#include "compress.h"
-
-#define MINIMUM(a,b)	(((a)<(b))?(a):(b))
+#include "dictd.h"
+#include "database.h"
 
 /* gzip flag byte */
 #define ASCII_FLAG   0x01 /* bit 0 set: file probably ascii text */
@@ -103,8 +102,29 @@ static const u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 static u_int32_t get_int32(gz_stream *);
 static int get_header(gz_stream *);
 static int get_byte(gz_stream *);
+static void *gz_ropen(char *);
+static int gz_read(void *, size_t, char *, size_t);
+static int gz_close(void *);
 
-void *
+int
+database_open(char *path, struct dc_database *db)
+{
+	if ((db->data = gz_ropen(path)) == NULL)
+		return -1;
+
+	return 0;
+}
+
+int
+database_lookup(struct dc_index_entry *req, struct dc_database *db, char *out)
+{
+	if (gz_read(db->data, req->def_off, out, req->def_len) == -1)
+		return -1;
+
+	return req->def_len;
+}
+
+static void *
 gz_ropen(char *path)
 {
 	struct stat sb;
@@ -313,7 +333,7 @@ get_header(gz_stream *s)
 	return 0;
 }
 
-int
+static int
 gz_read(void *cookie, size_t off, char *out, size_t len)
 {
 	gz_stream *s = (gz_stream*)cookie;
@@ -368,7 +388,7 @@ gz_read(void *cookie, size_t off, char *out, size_t len)
 	return -1;
 }
 
-int
+static int
 gz_close(void *cookie)
 {
 	gz_stream *s = (gz_stream*)cookie;
