@@ -125,16 +125,16 @@ main(int argc, char *argv[])
 	for (i = 0; i < MAX_RESULTS; i++)
 		SLIST_INSERT_HEAD(&list, &myr[i], entries);
 
-	if (database_open(db_path, &mydb) != 0)
+	if (database_open(db_path, &mydb) == -1)
 		errx(1, "database_open");
 
-	if (index_open(idx_path, &mydb.index) != 0)
+	if (index_open(idx_path, &mydb.index) == -1)
 		errx(1, "index_open");
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	if (!Vflag && index_validate(&mydb.index) != 0)
+	if (!Vflag && index_validate(&mydb.index) == -1)
 		errx(1, "index_validate");
 
 	if (index_prefix_find(argv[0], &mydb.index, &list) == -1)
