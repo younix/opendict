@@ -116,8 +116,6 @@ main(int argc, char *argv[])
 
 	if (unveil("/usr/local/freedict", "r") == -1)
 		err(1, "unveil");
-	if (unveil(NULL, NULL) == -1)
-		err(1, "unveil");
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
