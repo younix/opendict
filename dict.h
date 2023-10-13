@@ -34,8 +34,6 @@ struct dc_index {
 };
 
 struct dc_database {
-	char				*name;
 	void				*data;
 	struct dc_index			 index;
-	TAILQ_ENTRY(dc_database)	 entry;
 };
