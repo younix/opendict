@@ -105,10 +105,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1)
-		return 1;
-
-	if (db_path == NULL || idx_path == NULL)
+	if (argc != 1 || db_path == NULL || idx_path == NULL)
 		usage();
 
 	if (!dflag)
