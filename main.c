@@ -32,7 +32,7 @@
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: dict -D database [-dm] word\n");
+	fprintf(stderr, "usage: dict -D database [-Vdm] word\n");
 	exit(1);
 }
 
@@ -82,15 +82,19 @@ main(int argc, char *argv[])
 	struct dc_index_list list;
 	struct dc_index_entry myr[MAX_RESULTS];
 	char *db_path = NULL, *idx_path = NULL;
-	int dflag = 0, mflag = 0, ch, i;
+	int ch, i;
+	int Vflag = 0, dflag = 0, mflag = 0;
 
-	while ((ch = getopt(argc, argv, "D:dm")) != -1) {
+	while ((ch = getopt(argc, argv, "D:Vdm")) != -1) {
 		switch (ch) {
 		case 'D':
 			asprintf(&db_path, "/usr/local/freedict/%s/%s.dict.dz",
 			    optarg, optarg);
 			asprintf(&idx_path, "/usr/local/freedict/%s/%s.index",
 			    optarg, optarg);
+			break;
+		case 'V':
+			Vflag = 1;
 			break;
 		case 'd':
 			dflag = 1;
@@ -129,6 +133,9 @@ main(int argc, char *argv[])
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
+
+	if (!Vflag && index_validate(&mydb.index) != 0)
+		errx(1, "index_validate");
 
 	if (index_prefix_find(argv[0], &mydb.index, &list) == -1)
 		errx(1, "index_prefix_find");

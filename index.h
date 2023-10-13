@@ -15,6 +15,7 @@
  */
 
 int index_open(char *, struct dc_index *);
+int index_validate(struct dc_index *);
 int index_exact_find(const char *, const struct dc_index *,
     struct dc_index_list *);
 int index_prefix_find(const char *, const struct dc_index *,

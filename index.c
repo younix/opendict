@@ -31,46 +31,53 @@ int
 index_open(char *path, struct dc_index *idx)
 {
 	struct stat sb;
-	off_t i;
-	int fd, tabs = 0, b64len = -1;
-	char c;
+	int fd;
 
 	if ((fd = open(path, O_RDONLY)) == -1)
-		err(1, "open");
+		return -1;
 	if (fstat(fd, &sb) == -1)
-		err(1, "fstat");
+		return -1;
 	idx->size = sb.st_size;
 
 	idx->data = mmap(NULL, idx->size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (idx->data == MAP_FAILED)
-		err(1, "mmap");
+		return -1;
+
+	return 0;
+}
+
+int
+index_validate(struct dc_index *idx)
+{
+	off_t i;
+	int tabs = 0, b64len = -1;
+	char c;
 
 	for(i = 0; i < idx->size; i++) {
 		c = idx->data[i];
 		if (c == '\t') {
 			if (b64len > 8)
-				errx(1, "index offsets are too big");
+				return -1;
 			else if (b64len == 0)
-				errx(1, "index offsets are missing");
+				return -1;
 			tabs++;
 			b64len = 0;
 			if (tabs > 2)
-				errx(1, "index has too many tabs");
+				return -1;
 		} else if (c == '\n') {
 			if (tabs != 2)
-				errx(1, "index is missing tabs");
+				return -1;
 			tabs = 0;
 		} else if (tabs) {
 			if ((c != '+' && c < '/') || (c > '9' && c < 'A')
 			    || (c > 'Z' && c < 'a') || (c > 'z')) {
-				errx(1, "index offsets are not base64");
+				return -1;
 			}
 			b64len++;
 		}
 	}
 	if (idx->data[idx->size - 1] != '\n')
-		errx(1, "index does not end with newline");
-
+		return -1;
 	return 0;
 }
 
