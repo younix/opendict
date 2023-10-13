@@ -47,16 +47,19 @@ index_open(char *path, struct dc_index *idx)
 }
 
 int
-index_validate(struct dc_index *idx)
+index_validate(struct dc_index *idx, off_t size)
 {
 	off_t i;
-	int tabs = 0, b64len = -1;
+	int maxb64len = 0, tabs = 0, b64len = -1;
 	char c;
+
+	for (; size; size >>= 6)
+		maxb64len++;
 
 	for(i = 0; i < idx->size; i++) {
 		c = idx->data[i];
 		if (c == '\t') {
-			if (b64len > 8)
+			if (b64len > maxb64len)
 				return -1;
 			else if (b64len == 0)
 				return -1;

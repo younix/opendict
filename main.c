@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	if (!Vflag && index_validate(&mydb.index) == -1)
+	if (!Vflag && index_validate(&mydb.index, mydb.size) == -1)
 		errx(1, "index_validate");
 	if (index_prefix_find(argv[0], &mydb.index, &list) == -1)
 		errx(1, "index_prefix_find");

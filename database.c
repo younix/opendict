@@ -110,8 +110,12 @@ static int gz_close(void *);
 int
 database_open(char *path, struct dc_database *db)
 {
-	if ((db->data = gz_ropen(path)) == NULL)
+	gz_stream *s;
+	if((s = gz_ropen(path)) == NULL)
 		return -1;
+
+	db->data = s;
+	db->size = s->ra_clen * s->ra_ccount;
 
 	return 0;
 }
