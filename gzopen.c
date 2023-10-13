@@ -84,9 +84,6 @@
 #define COMMENT      0x10 /* bit 4 set: file comment present */
 #define RESERVED     0xE0 /* bits 5..7: reserved */
 
-#define DEF_MEM_LEVEL 8
-#define OS_CODE 0x03 /* unix */
-
 typedef
 struct gz_stream {
 	int	z_eof;		/* set if end of input file */
