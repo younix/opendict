@@ -128,7 +128,6 @@ main(int argc, char *argv[])
 
 	if (database_open(db_path, &mydb) == -1)
 		errx(1, "database_open");
-
 	if (index_open(idx_path, &mydb.index) == -1)
 		errx(1, "index_open");
 
@@ -137,7 +136,6 @@ main(int argc, char *argv[])
 
 	if (!Vflag && index_validate(&mydb.index) == -1)
 		errx(1, "index_validate");
-
 	if (index_prefix_find(argv[0], &mydb.index, &list) == -1)
 		errx(1, "index_prefix_find");
 
