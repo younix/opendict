@@ -2,6 +2,7 @@
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
+ * Copyright (c) 2023 Moritz Buhl
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
