@@ -61,7 +61,7 @@ match(struct dc_index_list *l)
 static void
 define(struct dc_database *db, struct dc_index_list *l)
 {
-	char buf[65535];
+	char buf[LOOKUP_MAX];
 	struct dc_index_entry *e;
 	int r;
 

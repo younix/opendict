@@ -16,7 +16,8 @@
 
 #include <sys/queue.h>
 
-#define WORD_MAX	4096
+#define WORD_MAX	4095
+#define LOOKUP_MAX	4095
 
 #define MAXIMUM(a,b)	(((a)>(b))?(a):(b))
 #define MINIMUM(a,b)	(((a)<(b))?(a):(b))

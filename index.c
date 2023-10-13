@@ -46,24 +46,29 @@ index_open(char *path, struct dc_index *idx)
 }
 
 int
-index_validate(struct dc_index *idx, off_t size)
+index_validate(struct dc_index *idx, off_t db_size)
 {
 	off_t i;
-	int maxb64len = 0, tabs = 0, b64len = -1;
+	int b64off_max = 0, b64len_max = 0, tabs = 0, b64chars = -1;
 	char c;
 
-	for (; size; size >>= 6)
-		maxb64len++;
+	for (; db_size; db_size >>= 6)
+		b64off_max++;
+
+	for (i = LOOKUP_MAX; i; i >>= 6)
+		b64len_max++;
 
 	for(i = 0; i < idx->size; i++) {
 		c = idx->data[i];
 		if (c == '\t') {
-			if (b64len > maxb64len)
+			if (tabs == 1 && b64chars > b64off_max)
 				return -1;
-			else if (b64len == 0)
+			else if (tabs == 2 && b64chars > b64len_max)
+				return -1;
+			else if (b64chars == 0)
 				return -1;
 			tabs++;
-			b64len = 0;
+			b64chars = 0;
 			if (tabs > 2)
 				return -1;
 		} else if (c == '\n') {
@@ -75,7 +80,7 @@ index_validate(struct dc_index *idx, off_t size)
 			    || (c > 'Z' && c < 'a') || (c > 'z')) {
 				return -1;
 			}
-			b64len++;
+			b64chars++;
 		}
 	}
 	if (idx->data[idx->size - 1] != '\n')
@@ -129,6 +134,9 @@ index_parse_line(const char *line, struct dc_index_entry *e)
 	data = line + l;
 	data += index_parse_b64(data, &e->def_off);
 	index_parse_b64(data, &e->def_len);
+
+	if (e->def_len > LOOKUP_MAX)
+		e->def_len =  LOOKUP_MAX;
 
 	return e;
 }
