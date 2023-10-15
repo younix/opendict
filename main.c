@@ -150,4 +150,6 @@ main(int argc, char *argv[])
 		match(&list);
 	if (dflag)
 		define(&mydb, &list);
+
+	return EXIT_SUCCESS;
 }
