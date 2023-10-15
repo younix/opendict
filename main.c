@@ -33,7 +33,7 @@
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: dict -D database [-Vdm] word\n");
+	fputs("usage: dict -D database [-Vdm] word\n", stderr);
 	exit(1);
 }
 
