@@ -186,20 +186,25 @@ index_bsearch(const char *key, const struct dc_index *idx,
 	const char *base = idx->data;
 	const char *end = idx->data + idx->size;
 	const char *p;
-	size_t lim;
+	size_t lim = idx->size;
 	int cmp;
 
-	for (lim = idx->size; lim != 0; lim >>= 1) {
-		p = base + (lim >> 1);
+	while (lim != 0) {
+		p = base + lim;
+
 		while (p < end && p[0] != '\n') p++;
 		p++;
+		if (p >= end)
+			break;
 		cmp = (*compar)(key, p);
 		if (cmp == 0)
 			return ((void *)p);
-		if (cmp > 0) {  /* key > p: move right */
-			base = (char *)p;
-			lim--;
-		} /* else move left */
+		if (cmp > 0) {	/* key > p: move right */
+			base = p;
+			lim = (end - p) / 2;
+		} else {	/* else move left */
+			lim = (p - base) / 2;
+		}
 	}
 	return (NULL);
 }
