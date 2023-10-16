@@ -212,12 +212,11 @@ index_bsearch(const char *key, const struct dc_index *idx,
 
 static int
 index_find(const char *req, const struct dc_index *idx,
-    struct dc_index_list *lst, int (*compar)(const char *, const char *))
+    struct dc_index_entry *e, int (*compar)(const char *, const char *))
 {
 
 	const char *base = idx->data;
 	const char *end = idx->data + idx->size;
-	struct dc_index_entry *e = SLIST_FIRST(lst);
 	const char *p;
 	int r = 0;
 
@@ -249,14 +248,14 @@ index_find(const char *req, const struct dc_index *idx,
 
 int
 index_prefix_find(const char *req, const struct dc_index *idx,
-    struct dc_index_list *lst)
+    struct dc_index_entry *e)
 {
-	return index_find(req, idx, lst, index_prefix_cmp);
+	return index_find(req, idx, e, index_prefix_cmp);
 }
 
 int
 index_exact_find(const char *req, const struct dc_index *idx,
-    struct dc_index_list *lst)
+    struct dc_index_entry *e)
 {
-	return index_find(req, idx, lst, index_exact_cmp);
+	return index_find(req, idx, e, index_exact_cmp);
 }
