@@ -224,6 +224,9 @@ index_find(const char *req, const struct dc_index *idx,
 
 	while (p < end && p[0] != '\n') p++;
 	p++;
+	if (p >= end)
+		return r;
+
 	while (compar(req, p) == 0) {
 		e = SLIST_NEXT(index_parse_line(p, e), entries);
 		r++;
@@ -231,7 +234,7 @@ index_find(const char *req, const struct dc_index *idx,
 			return r;
 		while (p < end && p[0] != '\n') p++;
 		p++;
-		if (p == end)
+		if (p >= end)
 			break;
 	}
 
