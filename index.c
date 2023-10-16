@@ -216,7 +216,7 @@ index_find(const char *req, const struct dc_index *idx,
 	int r = 0;
 
 	if ((p = index_bsearch(req, idx, compar)) == NULL)
-		return -1;
+		return r;
 	do {
 		p--;
 		while (p > base && p[-1] != '\n') p--;
