@@ -33,7 +33,7 @@
 static __dead void
 usage(void)
 {
-	fputs("usage: dict -D database [-Vdm] word [...]\n", stderr);
+	fputs("usage: dict -D database [-Vdem] word [...]\n", stderr);
 	exit(1);
 }
 
@@ -86,9 +86,9 @@ main(int argc, char *argv[])
 	char *db_path = NULL, *idx_path = NULL;
 	char *lookup;
 	int ch, i, r = 0;
-	int Vflag = 0, dflag = 0, mflag = 0;
+	int Vflag = 0, dflag = 0, eflag = 0, mflag = 0;
 
-	while ((ch = getopt(argc, argv, "D:Vdm")) != -1) {
+	while ((ch = getopt(argc, argv, "D:Vdem")) != -1) {
 		switch (ch) {
 		case 'D':
 			asprintf(&db_path, "/usr/local/freedict/%s/%s.dict.dz",
@@ -101,6 +101,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			dflag = 1;
+			break;
+		case 'e':
+			eflag = 1;
 			break;
 		case 'm':
 			mflag = 1;
@@ -145,8 +148,15 @@ main(int argc, char *argv[])
 			errx(1, "strdup");
 		for (ch = 0; lookup[ch] != '\0'; ch++)
 			lookup[ch] = tolower(lookup[ch]);
-		if ((r = index_prefix_find(lookup, &mydb.index, &myr[r])) == -1)
-			errx(1, "index_prefix_find");
+		if (eflag) {
+			if ((r = index_exact_find(lookup, &mydb.index,
+			    &myr[r])) == -1)
+				errx(1, "index_exact_find");
+		} else {
+			if ((r = index_prefix_find(lookup, &mydb.index,
+			    &myr[r])) == -1)
+				errx(1, "index_prefix_find");
+		}
 
 		free(lookup);
 	}
