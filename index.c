@@ -185,25 +185,26 @@ index_bsearch(const char *key, const struct dc_index *idx,
 {
 	const char *base = idx->data;
 	const char *end = idx->data + idx->size;
-	const char *p;
+	const char *p, *op;
 	size_t lim = idx->size;
 	int cmp;
 
 	while (lim != 0) {
-		p = base + lim;
+		p = base + lim / 2;
 
 		while (p < end && p[0] != '\n') p++;
 		p++;
-		if (p >= end)
+		if (p >= end || p == op)
 			break;
+		op = p;
 		cmp = (*compar)(key, p);
 		if (cmp == 0)
 			return ((void *)p);
 		if (cmp > 0) {	/* key > p: move right */
 			base = p;
-			lim = (end - p) / 2;
+			lim = end - p;
 		} else {	/* else move left */
-			lim = (p - base) / 2;
+			lim = p - base;
 		}
 	}
 	return (NULL);
