@@ -141,6 +141,36 @@ index_parse_line(const char *line, struct dc_index_entry *e)
 	return e;
 }
 
+const char *
+index_prev(const char *cur, const struct dc_index *idx)
+{
+	const char *base = idx->data;
+	const char *p = cur;
+
+	if (p == base)
+		return NULL;
+
+	p--;
+	while (p > base && p[-1] != '\n') p--;
+
+	return p;
+}
+
+const char *
+index_next(const char *cur, const struct dc_index *idx)
+{
+	const char *end = idx->data + idx->size;
+	const char *p = cur;
+
+	while (p < end && p[0] != '\n') p++;
+	p++;
+
+	if (p >= end)
+		return NULL;
+
+	return p;
+}
+
 /*
  * key is NUL terminated
  * entry is HT terminated
@@ -215,33 +245,27 @@ index_find(const char *req, const struct dc_index *idx,
     struct dc_index_list *list, int (*compar)(const char *, const char *))
 {
 
-	const char *base = idx->data;
-	const char *end = idx->data + idx->size;
 	const char *p;
 	struct dc_index_entry *e = SLIST_FIRST(list);
 	int r = 0;
 
 	if ((p = index_bsearch(req, idx, compar)) == NULL)
 		return r;
-	do {
-		p--;
-		while (p > base && p[-1] != '\n') p--;
-	} while (compar(req, p) == 0 && p > base);
+	while (p && compar(req, p) == 0) {
+		p = index_prev(p, idx);
+	}
 
-	while (p < end && p[0] != '\n') p++;
-	p++;
-	if (p >= end)
-		return r;
+	if (p == NULL)
+		p = idx->data;
+	else
+		p = index_next(p, idx);
 
-	while (compar(req, p) == 0) {
+	while (p && compar(req, p) == 0) {
 		e = SLIST_NEXT(index_parse_line(p, e), entries);
 		r++;
 		if (e == NULL)
 			return r;
-		while (p < end && p[0] != '\n') p++;
-		p++;
-		if (p >= end)
-			break;
+		p = index_next(p, idx);
 	}
 
 	return r;
