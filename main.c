@@ -49,12 +49,16 @@ match(struct dc_index_list *l)
 			break;
 
 		if (prev_len > 0 && prev_len == e->match_len
-		    && strncmp(prev_match, e->match, prev_len) == 0)
+		    && strncmp(prev_match, e->match, prev_len) == 0) {
+			e->match = NULL;
 			continue;
+		}
 		prev_len = e->match_len;
 		prev_match = e->match;
 
 		printf("- %.*s\n", e->match_len, e->match);
+
+		e->match = NULL;
 	}
 }
 
@@ -74,6 +78,8 @@ define(struct dc_database *db, struct dc_index_list *l)
 		} else {
 			printf("- %.*s", r, buf);
 		}
+
+		e->match = NULL;
 	}
 }
 
@@ -129,7 +135,7 @@ main(int argc, char *argv[])
 	SLIST_INIT(&list);
 	if ((myr = calloc(MAX_RESULTS, sizeof(struct dc_index_entry))) == NULL)
 		err(1, "calloc");
-	for (i = MAX_RESULTS - 1; i >= 0; i--)
+	for (i = 0; i < MAX_RESULTS; i++)
 		SLIST_INSERT_HEAD(&list, &myr[i], entries);
 
 	if (database_open(db_path, &mydb) == -1)
@@ -148,23 +154,24 @@ main(int argc, char *argv[])
 			errx(1, "strdup");
 		for (ch = 0; lookup[ch] != '\0'; ch++)
 			lookup[ch] = tolower(lookup[ch]);
+
 		if (eflag) {
 			if ((r = index_exact_find(lookup, &mydb.index,
-			    &myr[r])) == -1)
+			    &list)) == -1)
 				errx(1, "index_exact_find");
 		} else {
 			if ((r = index_prefix_find(lookup, &mydb.index,
-			    &myr[r])) == -1)
+			    &list)) == -1)
 				errx(1, "index_prefix_find");
 		}
 
 		free(lookup);
-	}
 
-	if (mflag)
-		match(&list);
-	if (dflag)
-		define(&mydb, &list);
+		if (mflag)
+			match(&list);
+		if (dflag)
+			define(&mydb, &list);
+	}
 
 	return EXIT_SUCCESS;
 }
