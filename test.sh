@@ -13,7 +13,7 @@ echo verify all index files
 for f in /usr/local/freedict/*; do
 	b=$(basename $f);
 	echo -n .
-	./obj/dict -D $b -m a >/dev/null
+	./obj/dict -eD $b -m ! >/dev/null
 done
 echo
 
