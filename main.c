@@ -156,11 +156,9 @@ main(int argc, char *argv[])
 			lookup[ch] = tolower(lookup[ch]);
 
 		if (eflag) {
-			if (index_exact_find(lookup, &mydb.index, &list) == -1)
-				errx(1, "index_exact_find");
+			index_exact_find(lookup, &mydb.index, &list);
 		} else {
-			if (index_prefix_find(lookup, &mydb.index, &list) == -1)
-				errx(1, "index_prefix_find");
+			index_prefix_find(lookup, &mydb.index, &list);
 		}
 
 		free(lookup);
