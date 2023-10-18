@@ -19,8 +19,8 @@
 #define WORD_MAX	4095
 #define LOOKUP_MAX	4095
 
-#define MAXIMUM(a,b)	(((a)>(b))?(a):(b))
-#define MINIMUM(a,b)	(((a)<(b))?(a):(b))
+#define MAX(a,b)	(((a)>(b))?(a):(b))
+#define MIN(a,b)	(((a)<(b))?(a):(b))
 
 SLIST_HEAD(dc_index_list, dc_index_entry);
 struct dc_index_entry {

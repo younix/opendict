@@ -371,7 +371,7 @@ gz_read(void *cookie, size_t off, char *out, size_t len)
 		}
 	}
 
-	cpylen = MINIMUM(len, s->ra_clen - off);
+	cpylen = MIN(len, s->ra_clen - off);
 	memcpy(out, s->o_buf + off, cpylen);
 	len -= cpylen;
 	out += cpylen;
