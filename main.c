@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < argc; i++) {
 		if ((lookup = strdup(argv[i])) == NULL)
-			errx(1, "strdup");
+			err(1, "strdup");
 		for (ch = 0; lookup[ch] != '\0'; ch++)
 			lookup[ch] = tolower(lookup[ch]);
 
