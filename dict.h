@@ -37,7 +37,7 @@ struct dc_index {
 };
 
 struct dc_database {
-	void				*data;
-	off_t		 		 size;
-	struct dc_index			 index;
+	void		*data;
+	off_t		 size;
+	struct dc_index	 index;
 };
