@@ -2,10 +2,12 @@
 set -e
 
 function cleanup {
-  rm  "$tmp"
+  rm "$tmp"
 }
 tmp=$(mktemp)
 trap cleanup EXIT
+
+ncpu=$(sysctl -n hw.ncpuonline)
 
 echo verify all index files
 for f in /usr/local/freedict/*; do
@@ -21,7 +23,8 @@ for f in /usr/local/freedict/*; do
 	echo -n .
 	cut -d'	' -f1 "$f/$b.index" | grep -v '^$' | uniq > "$tmp"
 	idx=$(cat "$tmp" | wc -l)
-	dct=$(cat "$tmp" | tr \\n \\0 | xargs -0 -n 900 ./obj/dict -VeD "$b" | wc -l)
+	n=$((idx / ncpu))
+	dct=$(cat "$tmp" | tr \\n \\0 | xargs -P $ncpu -n $n -0 ./obj/dict -VeD "$b" | wc -l)
 	if [ "$idx" -ne "$dct" ]; then
 		cat "$tmp"
 		echo "$b: $idx vs $dct"
@@ -33,12 +36,12 @@ echo
 echo lookup between every word
 for f in /usr/local/freedict/*; do
 	b=$(basename "$f");
-	f=/usr/local/freedict/fra-deu
-	b=fra-deu
 	echo -n .
 	echo ! > "$tmp"
 	cut -d'	' -f1 "$f/$b.index" | grep -v '^$' | uniq | sed -e 's/$/!/g' >> "$tmp"
-	dct=$(cat "$tmp" | tr \\n \\0 | xargs -0 -n 900 ./obj/dict -VeD "$b")
+	idx=$(cat "$tmp" | wc -l)
+	n=$((idx / ncpu))
+	dct=$(cat "$tmp" | tr \\n \\0 | xargs -P $ncpu -n $n -0 ./obj/dict -VeD "$b")
 	if [ -n "$dct" ]; then
 		cat "$tmp"
 		echo "$b: $dct"
