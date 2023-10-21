@@ -137,11 +137,11 @@ main(int argc, char *argv[])
 		err(1, "calloc");
 	for (i = 0; i < MAX_RESULTS; i++)
 		SLIST_INSERT_HEAD(&list, &myr[i], entries);
-
 	if (database_open(db_path, &db) == -1)
 		errx(1, "database_open");
+
 	if (index_open(idx_path, &db.index) == -1)
-		errx(1, "index_open");
+		err(1, "index_open");
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
