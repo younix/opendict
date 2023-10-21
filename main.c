@@ -139,16 +139,16 @@ main(int argc, char *argv[])
 		SLIST_INSERT_HEAD(&list, &res[i], entries);
 
 	if (database_open(db_path, &db) == -1)
-		errx(1, "database_open");
+		errx(1, "cannot open dictionary '%s'", db_path);
 
 	if (index_open(idx_path, &db.index) == -1)
-		err(1, "index_open");
+		err(1, "cannot open index '%s'", idx_path);
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
 	if (!Vflag && index_validate(&db.index, db.size) == -1)
-		errx(1, "index_validate");
+		errx(1, "index '%s' failed validation", idx_path);
 
 	for (i = 0; i < argc; i++) {
 		if ((lookup = strdup(argv[i])) == NULL)
