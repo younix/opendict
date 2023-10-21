@@ -33,7 +33,7 @@
 static __dead void
 usage(void)
 {
-	fputs("usage: dict -D database [-Vdem] word [...]\n", stderr);
+	fputs("usage: dict -D dictionary [-Vdem] word [...]\n", stderr);
 	exit(1);
 }
 
@@ -86,12 +86,12 @@ define(struct dc_database *db, struct dc_index_list *l)
 int
 main(int argc, char *argv[])
 {
-	struct dc_database mydb;
+	struct dc_database db;
 	struct dc_index_list list;
 	struct dc_index_entry *res;
 	char *db_path = NULL, *idx_path = NULL;
 	char *lookup;
-	int ch, i, r = 0;
+	int ch, i;
 	int Vflag = 0, dflag = 0, eflag = 0, mflag = 0;
 
 	while ((ch = getopt(argc, argv, "D:Vdem")) != -1) {
@@ -138,31 +138,28 @@ main(int argc, char *argv[])
 	for (i = 0; i < MAX_RESULTS; i++)
 		SLIST_INSERT_HEAD(&list, &res[i], entries);
 
-	if (database_open(db_path, &mydb) == -1)
+	if (database_open(db_path, &db) == -1)
 		errx(1, "database_open");
-	if (index_open(idx_path, &mydb.index) == -1)
-		errx(1, "index_open");
+
+	if (index_open(idx_path, &db.index) == -1)
+		err(1, "index_open");
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	if (!Vflag && index_validate(&mydb.index, mydb.size) == -1)
+	if (!Vflag && index_validate(&db.index, db.size) == -1)
 		errx(1, "index_validate");
 
 	for (i = 0; i < argc; i++) {
 		if ((lookup = strdup(argv[i])) == NULL)
-			errx(1, "strdup");
+			err(1, "strdup");
 		for (ch = 0; lookup[ch] != '\0'; ch++)
 			lookup[ch] = tolower(lookup[ch]);
 
 		if (eflag) {
-			if ((r = index_exact_find(lookup, &mydb.index,
-			    &list)) == -1)
-				errx(1, "index_exact_find");
+			index_exact_find(lookup, &db.index, &list);
 		} else {
-			if ((r = index_prefix_find(lookup, &mydb.index,
-			    &list)) == -1)
-				errx(1, "index_prefix_find");
+			index_prefix_find(lookup, &db.index, &list);
 		}
 
 		free(lookup);
@@ -170,7 +167,7 @@ main(int argc, char *argv[])
 		if (mflag)
 			match(&list);
 		if (dflag)
-			define(&mydb, &list);
+			define(&db, &list);
 	}
 
 	return EXIT_SUCCESS;

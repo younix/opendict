@@ -182,7 +182,7 @@ index_exact_cmp(const char *key, const char *entry)
 	int r;
 
 	while (entry[elen] != '\t') elen++;
-	r = strncmp(key, entry, MINIMUM(klen, elen));
+	r = strncmp(key, entry, MIN(klen, elen));
 
 	if (r == 0 && klen < elen)
 		return -1;
@@ -202,7 +202,7 @@ index_prefix_cmp(const char *key, const char *entry)
 	int r;
 
 	while (entry[elen] != '\t') elen++;
-	r = strncmp(key, entry, MINIMUM(klen, elen));
+	r = strncmp(key, entry, MIN(klen, elen));
 
 	if (r == 0 && elen < klen)
 		return 1;
