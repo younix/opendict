@@ -215,7 +215,7 @@ index_bsearch(const char *key, const struct dc_index *idx,
 {
 	const char *base = idx->data;
 	const char *end = idx->data + idx->size;
-	const char *p, *op;
+	const char *p, *op = NULL;
 	size_t lim = idx->size / 2;
 	int cmp;
 
