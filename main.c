@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 {
 	struct dc_database db;
 	struct dc_index_list list;
-	struct dc_index_entry *myr;
+	struct dc_index_entry *res;
 	char *db_path = NULL, *idx_path = NULL;
 	char *lookup;
 	int ch, i;
@@ -133,10 +133,11 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	SLIST_INIT(&list);
-	if ((myr = calloc(MAX_RESULTS, sizeof(struct dc_index_entry))) == NULL)
+	if ((res = calloc(MAX_RESULTS, sizeof(struct dc_index_entry))) == NULL)
 		err(1, "calloc");
 	for (i = 0; i < MAX_RESULTS; i++)
-		SLIST_INSERT_HEAD(&list, &myr[i], entries);
+		SLIST_INSERT_HEAD(&list, &res[i], entries);
+
 	if (database_open(db_path, &db) == -1)
 		errx(1, "database_open");
 
