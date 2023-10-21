@@ -86,7 +86,7 @@ define(struct dc_database *db, struct dc_index_list *l)
 int
 main(int argc, char *argv[])
 {
-	struct dc_database mydb;
+	struct dc_database db;
 	struct dc_index_list list;
 	struct dc_index_entry *myr;
 	char *db_path = NULL, *idx_path = NULL;
@@ -137,16 +137,16 @@ main(int argc, char *argv[])
 		err(1, "calloc");
 	for (i = 0; i < MAX_RESULTS; i++)
 		SLIST_INSERT_HEAD(&list, &myr[i], entries);
+	if (database_open(db_path, &db) == -1)
+		errx(1, "database_open");
 
-	if (database_open(db_path, &mydb) == -1)
-		err(1, "database_open");
-	if (index_open(idx_path, &mydb.index) == -1)
+	if (index_open(idx_path, &db.index) == -1)
 		err(1, "index_open");
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	if (!Vflag && index_validate(&mydb.index, mydb.size) == -1)
+	if (!Vflag && index_validate(&db.index, db.size) == -1)
 		errx(1, "index_validate");
 
 	for (i = 0; i < argc; i++) {
@@ -156,9 +156,9 @@ main(int argc, char *argv[])
 			lookup[ch] = tolower(lookup[ch]);
 
 		if (eflag) {
-			index_exact_find(lookup, &mydb.index, &list);
+			index_exact_find(lookup, &db.index, &list);
 		} else {
-			index_prefix_find(lookup, &mydb.index, &list);
+			index_prefix_find(lookup, &db.index, &list);
 		}
 
 		free(lookup);
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 		if (mflag)
 			match(&list);
 		if (dflag)
-			define(&mydb, &list);
+			define(&db, &list);
 	}
 
 	return EXIT_SUCCESS;
