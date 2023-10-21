@@ -49,3 +49,20 @@ for f in /usr/local/freedict/*; do
 	fi
 done
 echo
+
+echo intermix words with garbage
+for f in /usr/local/freedict/*; do
+	b=$(basename "$f");
+	echo -n .
+	cut -d'	' -f1 "$f/$b.index" | grep -v '^$' | uniq > "$tmp"
+	idx=$(cat "$tmp" | wc -l)
+	n=$((idx / ncpu))
+	dct=$(sort "$tmp" | sed -e 's/^\(.*\)/\1\
+\1!/'| tr \\n \\0 | xargs -P $ncpu -n $n -0 ./obj/dict -VeD "$b" | wc -l)
+	if [ "$idx" -ne "$dct" ]; then
+		cat "$tmp"
+		echo "$b: $idx vs $dct"
+		exit 1
+	fi
+done
+echo
