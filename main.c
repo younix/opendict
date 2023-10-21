@@ -33,7 +33,7 @@
 static __dead void
 usage(void)
 {
-	fputs("usage: dict -D database [-Vdem] word [...]\n", stderr);
+	fputs("usage: dict -D dictionary [-Vdem] word [...]\n", stderr);
 	exit(1);
 }
 
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 	struct dc_index_entry *myr;
 	char *db_path = NULL, *idx_path = NULL;
 	char *lookup;
-	int ch, i, r = 0;
+	int ch, i;
 	int Vflag = 0, dflag = 0, eflag = 0, mflag = 0;
 
 	while ((ch = getopt(argc, argv, "D:Vdem")) != -1) {
@@ -156,13 +156,9 @@ main(int argc, char *argv[])
 			lookup[ch] = tolower(lookup[ch]);
 
 		if (eflag) {
-			if ((r = index_exact_find(lookup, &db.index,
-			    &list)) == -1)
-				errx(1, "index_exact_find");
+			index_exact_find(lookup, &db.index, &list);
 		} else {
-			if ((r = index_prefix_find(lookup, &db.index,
-			    &list)) == -1)
-				errx(1, "index_prefix_find");
+			index_prefix_find(lookup, &db.index, &list);
 		}
 
 		free(lookup);
