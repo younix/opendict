@@ -127,14 +127,13 @@ index_parse_line(const char *line, struct dc_index_entry *e)
 	e->match = line;
 
 	while (line[l] != '\t') l++;
-	if (l > WORD_MAX)
-		l = WORD_MAX;
 	e->match_len = l;
-
 	data = line + l;
 	data += index_parse_b64(data, &e->def_off);
 	index_parse_b64(data, &e->def_len);
 
+	if (e->match_len > WORD_MAX)
+		e->match_len = WORD_MAX;
 	if (e->def_len > LOOKUP_MAX)
 		e->def_len =  LOOKUP_MAX;
 
