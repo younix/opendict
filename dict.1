@@ -1,0 +1,91 @@
+.\"
+.\" Copyright (c) 2023 Moritz Buhl <mbuhl@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER
+.\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+.\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 24 2023 $
+.Dt DICT 1
+.Os
+.Sh NAME
+.Nm dict
+.Nd lookup dictionary entries
+.Sh SYNOPSIS
+.Nm dict
+.Fl D Ar dictionary
+.Op Fl Vdem
+.Ar word Op Ar ...
+.Sh DESCRIPTION
+The
+.Nm
+utility defines and matches words in a dictionary of the dictd
+format.
+By default all index entries are used that match the prefix of the
+given
+.Ar words .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl D Ar dictionary
+Use the specified
+.Ar dictionary
+to match and define words.
+See
+.Sx FILES
+for the naming of the index, dictionary, and the parent folder.
+.It Fl d
+Define the given
+.Ar words
+by looking up all matching index entries in the
+.Ar dictionary .
+If not specified, the
+.Fl m
+option is used.
+.It Fl e
+Only lookup index etries that exactly match the given
+.Ar words .
+.It Fl m
+Match
+.Ar words
+in the index of the dictionary. This option is used by default.
+.It Fl V
+Do not validate the index for correctness before matching words to
+reduce the overhead per
+.Nm
+invocation.
+By default
+.Nm
+validates the index for correctness before looking up words.
+.Sh FILES
+.Bl -tag -width "/usr/local/freedict/foo-bar/foo-bar.dict.dzXX" -compact
+.It Pa /usr/local/freedict/foo-bar/foo-bar.index
+Index file with words of 'foo' and references to words of 'bar'.
+.It Pa /usr/local/freedict/foo-bar/foo-bar.dict.dz
+Database file containing definitions of 'bar'.
+A
+.Xr gzip 1
+file with an additional random access header.
+.Sh EXAMPLES
+Match all index entries for the English word 'ham' in the 'eng-fra'
+dictionary using an exact match:
+.Bd -literal -offset indent
+$ dict -D eng-fra -em ham
+.Ed
+.Pp
+Define all words starting with 'manual' in the 'eng-deu' dictionary:
+.Bd -literal -offset indent
+$ dict -D eng-deu -d manual
+.Ed
+.Sh SEE ALSO
+.Xr gzip 1
+.Sh AUTHORS
+.An Moritz Buhl Aq Mt mbuhl@openbsd.org
